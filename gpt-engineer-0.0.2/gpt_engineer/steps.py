@@ -1,5 +1,6 @@
 import json
 import subprocess
+import evadb
 
 from gpt_engineer.ai import AI
 from gpt_engineer.chat_to_files import parse_chat, to_files
