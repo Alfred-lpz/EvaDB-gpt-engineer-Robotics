@@ -4,12 +4,13 @@ import pathlib
 import shutil
 
 import typer
-
+import evadb
 from gpt_engineer.ai import AI
 from gpt_engineer.db import DB, DBs
 from gpt_engineer.steps import STEPS
 
 app = typer.Typer()
+cursor = evadb.connect().cursor()
 
 
 @app.command()
@@ -53,6 +54,8 @@ def chat(
     for step in STEPS[steps_config]:
         messages = step(ai, dbs)
         dbs.logs[step.__name__] = json.dumps(messages)
+
+
 
 
 if __name__ == "__main__":
