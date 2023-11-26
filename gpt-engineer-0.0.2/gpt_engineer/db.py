@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-
+import json
 
 # This class represents a simple database that stores its data as files in a directory.
 # It supports both text and binary files, and can handle directory structures.
@@ -41,7 +41,21 @@ class DB:
         else:
             # If val is neither a string nor bytes, raise an error.
             raise TypeError("val must be either a str or bytes")
+        
+    def read_robot_config(self, robot_id):
+        """Reads the configuration for a specific robot."""
+        config_file = f"robot_configs/{robot_id}.json"
+        try:
+            return json.loads(self[config_file])
+        except FileNotFoundError:
+            raise FileNotFoundError(f"No configuration found for robot {robot_id}")
 
+    def write_robot_config(self, robot_id, config_data):
+        """Writes the configuration for a specific robot."""
+        if not isinstance(config_data, dict):
+            raise ValueError("Config data must be a dictionary")
+        config_file = f"robot_configs/{robot_id}.json"
+        self[config_file] = json.dumps(config_data, indent=4)
 
 # dataclass for all dbs:
 @dataclass
