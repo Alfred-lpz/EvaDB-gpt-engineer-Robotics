@@ -10,8 +10,7 @@ from gpt_engineer.db import DB, DBs
 from gpt_engineer.steps import STEPS
 
 app = typer.Typer()
-cursor = evadb.connect().cursor()
-
+evadb_connection = evadb.connect()  # Assuming evadb.connect() returns a connection object
 
 @app.command()
 def chat(
@@ -52,11 +51,16 @@ def chat(
     )
 
     for step in STEPS[steps_config]:
-        messages = step(ai, dbs)
+        messages = step(ai, dbs, evadb_connection)  # Pass the EvaDB connection to each step
         dbs.logs[step.__name__] = json.dumps(messages)
 
-
-
+        # Store conversation logs in EvaDB
+        for message in messages:
+            evadb_connection.cursor.execute(
+                "INSERT INTO conversation_logs (content) VALUES (%s)",
+                (json.dumps(message),)
+            )
+        evadb_connection.commit()
 
 if __name__ == "__main__":
     app()
