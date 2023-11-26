@@ -15,3 +15,19 @@ Chat Engineer is an innovative application designed to assist in solving complex
 2. Install dependencies:
    ```bash
    pip install -r requirements.txt
+   
+## Usage
+
+To use Chat Engineer, follow these steps:
+
+1. Run the main application script.
+2. Provide inputs as prompted by the AI.
+3. Review the generated specifications, unit tests, and code stored in EvaDB.
+
+## Contributing
+
+Contributions to Chat Engineer are welcome. Please ensure to follow the project's coding standards and submit pull requests for any enhancements.
+
+## Contact
+
+For any queries or contributions, please contact alfredliupz@gmail.com.
