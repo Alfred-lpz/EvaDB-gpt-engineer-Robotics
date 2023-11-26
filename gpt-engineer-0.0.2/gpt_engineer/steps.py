@@ -8,8 +8,11 @@ from gpt_engineer.db import DBs
 
 
 def setup_sys_prompt(dbs):
-    return dbs.identity["generate"] + "\nUseful to know:\n" + dbs.identity["philosophy"]
-
+    robotics_info = (
+        "Robotics context: Dealing with motion planning, sensor integration, "
+        "and real-time control systems.\n"
+    )
+    return dbs.identity["generate"] + "\nUseful to know:\n" + robotics_info + dbs.identity["philosophy"]
 
 def simple_gen(ai: AI, dbs: DBs):
     """Run the AI on the main prompt and save the results"""
@@ -52,21 +55,29 @@ def clarify(ai: AI, dbs: DBs):
     return messages
 
 
-def gen_spec(ai: AI, dbs: DBs):
+def gen_spec(ai: AI, dbs: DBs, evadb):
     """
-    Generate a spec from the main prompt + clarifications and save the results to
-    the workspace
+    Generate a spec with robotics context and store it in EvaDB.
     """
     messages = [
         ai.fsystem(setup_sys_prompt(dbs)),
         ai.fsystem(f"Instructions: {dbs.input['main_prompt']}"),
+        ai.fsystem("Include requirements for motion planning, sensor integration, and real-time control.")
     ]
 
     messages = ai.next(messages, dbs.identity["spec"])
 
-    dbs.memory["specification"] = messages[-1]["content"]
+    # Store the specification in EvaDB
+    spec = messages[-1]["content"]
+    evadb.store_specification(spec)
 
     return messages
+
+# Example EvaDB operation
+def store_specification(self, spec):
+    query = "INSERT INTO specifications (content) VALUES (%s)"
+    self.cursor.execute(query, (spec,))
+    self.connection.commit()
 
 
 def respec(ai: AI, dbs: DBs):
@@ -90,22 +101,30 @@ def respec(ai: AI, dbs: DBs):
     return messages
 
 
-def gen_unit_tests(ai: AI, dbs: DBs):
+def gen_unit_tests(ai: AI, dbs: DBs, evadb):
     """
-    Generate unit tests based on the specification, that should work.
+    Generate unit tests with robotics context and store them in EvaDB.
     """
     messages = [
         ai.fsystem(setup_sys_prompt(dbs)),
         ai.fuser(f"Instructions: {dbs.input['main_prompt']}"),
         ai.fuser(f"Specification:\n\n{dbs.memory['specification']}"),
+        ai.fsystem("Add tests for motion path planning and sensor data accuracy.")
     ]
 
     messages = ai.next(messages, dbs.identity["unit_tests"])
 
-    dbs.memory["unit_tests"] = messages[-1]["content"]
-    to_files(dbs.memory["unit_tests"], dbs.workspace)
+    # Store the unit tests in EvaDB
+    unit_tests = messages[-1]["content"]
+    evadb.store_unit_tests(unit_tests)
 
     return messages
+
+# Example EvaDB operation
+def store_unit_tests(self, unit_tests):
+    query = "INSERT INTO unit_tests (content) VALUES (%s)"
+    self.cursor.execute(query, (unit_tests,))
+    self.connection.commit()
 
 
 def gen_clarified_code(ai: AI, dbs: DBs):
@@ -122,19 +141,30 @@ def gen_clarified_code(ai: AI, dbs: DBs):
     return messages
 
 
-def gen_code(ai: AI, dbs: DBs):
-    # get the messages from previous step
-
+def gen_code(ai: AI, dbs: DBs, evadb):
+    """
+    Generate code with robotics context and store it in EvaDB.
+    """
     messages = [
         ai.fsystem(setup_sys_prompt(dbs)),
         ai.fuser(f"Instructions: {dbs.input['main_prompt']}"),
         ai.fuser(f"Specification:\n\n{dbs.memory['specification']}"),
         ai.fuser(f"Unit tests:\n\n{dbs.memory['unit_tests']}"),
+        ai.fsystem("Generate code for motion path planning and sensor integration.")
     ]
     messages = ai.next(messages, dbs.identity["use_qa"])
-    to_files(messages[-1]["content"], dbs.workspace)
+
+    # Store the generated code in EvaDB
+    code = messages[-1]["content"]
+    evadb.store_code(code)
+
     return messages
 
+# Example EvaDB operation
+def store_code(self, code):
+    query = "INSERT INTO code (content) VALUES (%s)"
+    self.cursor.execute(query, (code,))
+    self.connection.commit()
 
 def execute_entrypoint(ai, dbs):
     command = dbs.workspace["run.sh"]
